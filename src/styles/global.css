@@ -1,0 +1,23 @@
+/* src/styles/global.css */
+@import "tailwindcss";
+
+@theme {
+  /* Absolute deep off-black canvas mapping */
+  --color-background: #09090b;
+  
+  /* Elevated slate card surfaces */
+  --color-surface: #18181b;
+  
+  /* Aggressive structural brand crimson red */
+  --color-primary: #dc2626;
+  
+  /* Muted dark blood red border lines and hover targets */
+  --color-accent: #991b1b;
+  
+  /* Crisp, high-contrast text typography */
+  --color-foreground: #f4f4f5;
+
+  /* Custom wide typography styling for your industrial band header */
+  --font-display: "Syncopate", sans-serif;
+  --font-sans: "Inter", sans-serif;
+}

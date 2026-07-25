@@ -1,0 +1,26 @@
+---
+// src/layouts/Layout.astro
+import '../styles/global.css'; // This links your black & crimson theme variables
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+<!doctype html>
+<html lang="en" class="bg-background">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <!-- Dynamic Google Font injection for your typography styling -->
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Syncopate:wght@700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-background text-foreground antialiased selection:bg-primary selection:text-foreground">
+    <slot />
+  </body>
+</html>
