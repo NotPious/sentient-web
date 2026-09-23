@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 export default function NewsletterForm() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
 
@@ -12,11 +13,12 @@ export default function NewsletterForm() {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ name, email }),
       });
 
       if (res.ok) {
         setStatus('success');
+        setName('');
         setEmail('');
       } else {
         setStatus('error');
@@ -37,10 +39,15 @@ export default function NewsletterForm() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4">
             
             <form onSubmit={handleSubmit} className="w-full flex flex-col sm:flex-row gap-4 sm:items-center">
-              {/* 
-                PLACEHOLDER FIX: Explicitly uniform tracking anchors using placeholder: prefix 
-                so type="email" and type="text" render identically.
-              */}
+              <input
+                type="text"
+                required
+                placeholder="Enter your name..."
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="flex-1 bg-background border border-accent/40 rounded px-4 py-2 text-foreground text-sm placeholder:text-zinc-500 placeholder:text-sm focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
+              />
+
               <input
                 type="email"
                 required
@@ -61,10 +68,6 @@ export default function NewsletterForm() {
             </form>
           </div>
 
-          {/* 
-            Nesting this element under the divide-y line matches how the show location text 
-            sits inside the card architecture, giving it the exact same spatial layout.
-          */}
           <div className="pt-4">
             <p className="text-sm text-zinc-400">
               Receive tour announcements and official updates.
