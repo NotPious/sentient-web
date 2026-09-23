@@ -1,73 +1,85 @@
-# Sentient Newsletter & Automated Email Engine 🚀
+# Sentient — Official Website
 
-A lightweight, high-performance newsletter subscription and broadcast engine built for the **Sentient** platform. This setup captures subscriber details via an **Astro/React** frontend, proxies them through a secure serverless endpoint on **Vercel**, tracks them inside a **Google Sheet** CRM, and instantly fires off automated emails without using expensive third-party marketing platforms.
+Live site: [sentient-web-iota.vercel.app](https://sentient-web-iota.vercel.app)
 
----
+The official web presence for **Sentient**: streaming links, a tour date list backed by a Google Sheet, and a mailing-list signup that writes straight into that same sheet and triggers a welcome email — no third-party mailing list provider required.
 
-## 🏗️ System Architecture & Data Flow
+Built with [Astro](https://astro.build) (server output), React islands, and Tailwind CSS v4, deployed on Vercel.
 
-1. **Frontend (UI):** User submits their Name and Email via the React component (`NewsletterForm.jsx`).
-2. **Serverless Proxy:** Astro API Route (`subscribe.ts`) intercepts the request on Vercel to bypass CORS preflight restrictions and safely mask backend URLs.
-3. **Google Apps Script (Database & Mail Engine):** The proxy forwards payloads to a Google Apps Script Web App via a `POST` request.
-   - Appends user data securely using a structural `LockService` to prevent database race-conditions.
-   - Instantly fires a **Welcome Email** with spoof-proof headers tailored to prevent Yahoo/Gmail spam flags.
-4. **CRM Admin Menu:** Triggers a custom spreadsheet macro button (`Newsletter Menu`) inside Google Sheets to handle bulk manual broadcasts to unsent subscribers.
-
----
-
-## 🛠️ Project Repository Tree
+## How it works
 
 ```text
-├── src/
-│   ├── components/
-│   │   └── NewsletterForm.jsx  # React UI element with Name/Email capture
-│   └── pages/
-│       └── api/
-│           └── subscribe.ts    # Vercel serverless proxy endpoint
-├── .env                        # Local configuration secrets (Git-ignored)
-├── .gitignore                  # Security barrier tracking definitions
-└── README.md                   # System configuration blueprints
+┌───────────────┐     ┌─────────────────────┐     ┌───────────────────────┐
+│  React forms  │ ──> │  Astro API routes   │ ──> │  Google Sheet + Apps  │
+│ (client:load) │     │  (Vercel functions) │     │  Script (data + mail) │
+└───────────────┘     └─────────────────────┘     └───────────────────────┘
 ```
 
----
+- **Tour dates** — `TourWidget.jsx` renders a searchable/filterable list of shows. On each request, `/api/tour-dates` pulls rows live from a public Google Sheet (via [opensheet.elk.sh](https://opensheet.elk.sh)) and falls back to a small set of mock dates if the sheet is unreachable, so the page never breaks.
+- **Newsletter signup** — `NewsletterForm.jsx` posts a name/email to `/api/subscribe`, an Astro server route that forwards the payload to a Google Apps Script Web App. The script appends the row to the sheet (guarded with `LockService` to avoid write collisions) and sends a welcome email, all without exposing the Apps Script URL to the browser or hitting CORS preflight issues.
+- **Logo** — `Logo.astro` inlines the brand SVG at build time so it can be styled/colored like any other element instead of sitting behind an `<img>` tag.
 
-## ⚡ Environment Variables
+## Project structure
 
-The project uses runtime environment injection to switch target backends seamlessly. Create a `.env` file in your root folder:
+```text
+src/
+├── components/
+│   ├── Logo.astro          # Inlines and sanitizes the brand SVG
+│   ├── NewsletterForm.jsx  # Name/email signup form (client-side)
+│   └── TourWidget.jsx      # Searchable tour date list (client-side)
+├── layouts/
+│   └── Layout.astro        # Base HTML shell, fonts, global styles
+├── pages/
+│   ├── index.astro         # Home page — hero, signup, tour dates
+│   └── api/
+│       ├── subscribe.ts    # POST /api/subscribe -> Google Apps Script
+│       └── tour-dates.ts   # GET /api/tour-dates -> Google Sheet (with fallback)
+└── styles/
+    └── global.css          # Tailwind v4 theme tokens (colors, fonts)
+public/
+└── favicon.svg / favicon.ico
+```
+
+## Getting started
+
+Requires Node.js **22.12+**.
+
+```bash
+npm install
+npm run dev
+```
+
+| Command            | Action                                  |
+| ------------------ | --------------------------------------- |
+| `npm run dev`      | Start the local dev server              |
+| `npm run build`    | Build the production site to `./dist`   |
+| `npm run preview`  | Preview the production build locally    |
+| `npm run astro`    | Run the Astro CLI directly              |
+
+## Environment variables
+
+Create a `.env` file in the project root (already git-ignored):
 
 ```env
-# Google Apps Script Production Execution Link
-GOOGLE_APPS_SCRIPT_URL="https://google.com"
+# Google Apps Script Web App execution URL that /api/subscribe forwards to
+GOOGLE_APPS_SCRIPT_URL="https://script.google.com/macros/s/XXXXXXXX/exec"
 ```
 
-> ⚠️ **Security Warning:** Never commit `.env` files to remote version control repositories. This rule is enforced strictly via `.gitignore`.
+The tour-dates endpoint currently points at a fixed public Google Sheet URL in `src/pages/api/tour-dates.ts`; update the `SHEET_JSON_URL` constant there to point at your own sheet.
 
----
+## Deployment (Vercel)
 
-## 📦 Production Deployment Instructions
+1. **Google Apps Script**: open the tracking spreadsheet → **Extensions > Apps Script**, deploy it as a Web App (**Deploy > Manage Deployments**, access set to "Anyone"), and copy the resulting URL.
+2. **Vercel**: in the project's **Settings > Environment Variables**, add `GOOGLE_APPS_SCRIPT_URL` with that value, then redeploy. The site uses the `@astrojs/vercel` adapter with `output: 'server'`, so `/api/*` routes run as Vercel serverless functions.
 
-### 1. Google Workspace & Apps Script
+## Email deliverability
 
-1. Open the target Google Sheet tracking spreadsheet.
-2. Navigate to **Extensions > Apps Script** and update your script file with production configurations.
-3. Click **Deploy > Manage Deployments**.
-4. Create a **New Version**, change access settings to **"Anyone"**, and copy the newly generated Web App URL.
+Because welcome emails are sent from Apps Script rather than a dedicated email provider, make sure the sending domain has correct SPF, DKIM, and DMARC records configured (via Google Workspace admin) — otherwise messages are likely to be flagged as spam by Gmail/Yahoo.
 
-### 2. Hosting Configuration (Vercel)
+## Tech stack
 
-1. Log into your [Vercel Project Dashboard](https://vercel.com).
-2. Go to **Settings > Environment Variables**.
-3. Create a variable matching our backend key configuration:
-   - **Key:** `GOOGLE_APPS_SCRIPT_URL`
-   - **Value:** *[Your Live Google Web App URL]*
-4. Trigger a **Redeploy** to compile the site using your active environment parameters.
-
----
-
-## 🛡️ Anti-Spam (Yahoo & Gmail Deliverability) Checklist
-
-To ensure automated script emails don't get trapped by strict Yahoo or Gmail spam algorithms, confirm that your domain administration panel features the following active DNS TXT configurations:
-
-- **SPF:** `v=spf1 include:_://google.com ~all` (Merges authorized Google Workspace senders).
-- **DKIM:** Generated via the *Google Admin Console > Gmail > Authenticate email* to attach cryptographic verification signatures.
-- **DMARC:** `v=DMARC1; p=none;` applied under `_://yourdomain.com` host paths.
+- [Astro](https://astro.build) 7 (server-rendered)
+- [React](https://react.dev) 19 (interactive islands only)
+- [Tailwind CSS](https://tailwindcss.com) 4
+- [Vercel](https://vercel.com) hosting + serverless functions
+- Google Sheets + Apps Script as a free CRM/mailer backend
