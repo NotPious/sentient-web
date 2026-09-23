@@ -1,29 +1,12 @@
 ---
-// src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
+import Logo from '../components/Logo.astro';
+import NewsletterForm from '../components/NewsletterForm.jsx';
+import TourWidget from '../components/TourWidget.jsx';
 
-// We fetch the raw SVG text data dynamically during the static build phase
-import fs from 'node:fs';
-import path from 'node:path';
-
-const logoPath = path.join(process.cwd(), 'src', 'styles', 'redblack.svg');
-const rawLogoSvg = fs.readFileSync(logoPath, 'utf-8');
-
-// Strip out any hardcoded XML document declarations or fixed pixel dimensions 
-// to make the string safe to pass as clean responsive HTML output strings
-const cleanLogoSvg = rawLogoSvg
-  .replace(/<\?xml.*?\?>/g, '')
-  .replace(/<!DOCTYPE.*?>/g, '')
-  .replace(/<!--.*?-->/gs, '')
-  .replace(/width="\d+"/, 'width="100%"')
-  .replace(/height="\d+"/, 'height="100%"');
-
-// This is a temporary array of mock data to verify your frontend layout engine works
-const mockTourDates = [
-  { date: "Aug 29", venue: "Cherry Street Tavern", city: "Chattanooga, TN", ticketLink: "#" },
-  { date: "Sep 12", venue: "40 Watt Club", city: "Athens, GA", ticketLink: "#" },
-  { date: "Sep 26", venue: "The Blue Room", city: "Nashville, TN", ticketLink: "#" }
-];
+// Fetch directly from our new serverless API endpoint
+const response = await fetch(new URL('/api/tour-dates', Astro.url).href);
+const tourDates = await response.json();
 ---
 
 <Layout title="SENTIENT | Official Website">
@@ -34,8 +17,7 @@ const mockTourDates = [
       
       <!-- Responsive Logo Canvas Container -->
       <div class="w-full max-w-xs md:max-w-md fill-current text-foreground mb-4">
-        <!-- Render the cleaned vector source text directly onto the page canvas -->
-        <Fragment set:html={cleanLogoSvg} />
+        <Logo />
       </div>
 
       <div class="h-1 w-24 bg-primary mb-12"></div>
@@ -48,9 +30,21 @@ const mockTourDates = [
       </div>
     </header>
 
+    <!-- Mailing List Signup Section -->
+    <section class="w-full mt-24">
+      <h2 class="font-display text-xl uppercase tracking-widest text-primary mb-6">Join the Mailing List</h2>
+      <NewsletterForm client:load />
+    </section>
+
     <!-- Basic Tour Dates Display Area -->
     <section class="w-full mt-24">
       <h2 class="font-display text-xl uppercase tracking-widest text-primary mb-6">Upcoming Shows</h2>
+
+      <!-- client:load hydrates this component, making it instantly interactive for search/filters -->
+      <TourWidget client:load dates={tourDates} />
+
+<!-- Use  mock data to verify your frontend layout engine works
+
       <div class="bg-surface border border-accent/20 rounded-lg p-6 divide-y divide-accent/10">
         {mockTourDates.map((show) => (
           <div class="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -65,7 +59,9 @@ const mockTourDates = [
           </div>
         ))}
       </div>
-    </section>
 
+-->
+
+    </section>
   </main>
 </Layout>
