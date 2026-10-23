@@ -56,6 +56,8 @@ npm run dev
 | `npm run preview`  | Preview the production build locally    |
 | `npm run astro`    | Run the Astro CLI directly              |
 
+For the repeatable local development, GitHub publishing, and Vercel deployment workflow, see [DEVELOPMENT.md](./DEVELOPMENT.md).
+
 ## Environment variables
 
 Create a `.env` file in the project root (already git-ignored):
